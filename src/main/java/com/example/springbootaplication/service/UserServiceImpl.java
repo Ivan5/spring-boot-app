@@ -1,5 +1,6 @@
 package com.example.springbootaplication.service;
 
+import com.example.springbootaplication.Exception.UsernameOrIdNotFound;
 import com.example.springbootaplication.dto.ChangePasswordForm;
 import com.example.springbootaplication.entity.User;
 import com.example.springbootaplication.repository.UserRepository;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -46,8 +48,8 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public User getUserById(Long id) throws Exception {
-        return repository.findById(id).orElseThrow(() -> new Exception("El usuario para editar no existe."));
+    public User getUserById(Long id) throws UsernameOrIdNotFound {
+        return repository.findById(id).orElseThrow(() -> new UsernameOrIdNotFound("El ID del usuario para editar no existe."));
     }
 
     @Override
@@ -67,7 +69,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    public void deleteUser(Long id) throws Exception {
+    public void deleteUser(Long id) throws UsernameOrIdNotFound {
         User user = getUserById(id);
         repository.delete(user);
     }
@@ -85,7 +87,7 @@ public class UserServiceImpl implements UserService{
         }
 
         if( !form.getNewPassword().equals(form.getConfirmPassword())) {
-            throw new Exception("New Password and Confirm Password does not match!");
+            throw new Exception ("Nuevo Password y Confirm Password no coinciden.");
         }
 
         String encodePassword = bCryptPasswordEncoder.encode(form.getNewPassword());

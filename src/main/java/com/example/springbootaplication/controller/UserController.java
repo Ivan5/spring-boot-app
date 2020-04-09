@@ -1,5 +1,6 @@
 package com.example.springbootaplication.controller;
 
+import com.example.springbootaplication.Exception.UsernameOrIdNotFound;
 import com.example.springbootaplication.dto.ChangePasswordForm;
 import com.example.springbootaplication.entity.User;
 import com.example.springbootaplication.repository.RoleRepository;
@@ -12,6 +13,8 @@ import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import javax.validation.Valid;
 import java.util.stream.Collectors;
@@ -107,11 +110,11 @@ public class UserController {
     }
 
     @GetMapping("/deleteUser/{id}")
-    public String deleteUser(Model model, @PathVariable(name="id") Long id) {
+    public String deleteUser(Model model, @PathVariable(name="id")Long id) {
         try {
             userService.deleteUser(id);
-        } catch (Exception e) {
-            model.addAttribute("deleteError","The user could not be deleted.");
+        } catch (UsernameOrIdNotFound e) {
+            model.addAttribute("listErrorMessage",e.getMessage());
         }
         return userForm(model);
     }
