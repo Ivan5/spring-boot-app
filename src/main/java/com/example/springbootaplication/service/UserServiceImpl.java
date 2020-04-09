@@ -57,6 +57,12 @@ public class UserServiceImpl implements UserService{
         to.setRoles(from.getRoles());
     }
 
+    public void deleteUser(Long id) throws Exception {
+        User user = repository.findById(id)
+                .orElseThrow(() -> new Exception("UsernotFound in deleteUser -"+this.getClass().getName()));
+
+        repository.delete(user);
+    }
 
 
 
