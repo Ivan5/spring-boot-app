@@ -1,5 +1,6 @@
 package com.example.springbootaplication.service;
 
+import com.example.springbootaplication.dto.ChangePasswordForm;
 import com.example.springbootaplication.entity.User;
 import com.example.springbootaplication.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,27 @@ public class UserServiceImpl implements UserService{
         repository.delete(user);
     }
 
+    @Override
+    public User changePassword(ChangePasswordForm form) throws Exception {
+        User storedUser = repository
+                .findById( form.getId() )
+                .orElseThrow(() -> new Exception("UsernotFound in ChangePassword."));
+
+        if( form.getCurrentPassword().equals(storedUser.getPassword())) {
+            throw new Exception("Current Password Incorrect.");
+        }
+
+        if ( form.getCurrentPassword().equals(form.getNewPassword())) {
+            throw new Exception("New Password must be different than Current Password!");
+        }
+
+        if( !form.getNewPassword().equals(form.getConfirmPassword())) {
+            throw new Exception("New Password and Confirm Password does not match!");
+        }
+
+        storedUser.setPassword(form.getNewPassword());
+        return repository.save(storedUser);
+    }
 
 
     @Override
