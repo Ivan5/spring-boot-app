@@ -4,6 +4,10 @@ import com.example.springbootaplication.dto.ChangePasswordForm;
 import com.example.springbootaplication.entity.User;
 import com.example.springbootaplication.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -13,6 +17,9 @@ public class UserServiceImpl implements UserService{
 
     @Autowired
     UserRepository repository;
+
+    @Autowired
+    BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
     public Iterable<User> getAllUsers() {
@@ -58,20 +65,18 @@ public class UserServiceImpl implements UserService{
         to.setRoles(from.getRoles());
     }
 
+    @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     public void deleteUser(Long id) throws Exception {
-        User user = repository.findById(id)
-                .orElseThrow(() -> new Exception("UsernotFound in deleteUser -"+this.getClass().getName()));
-
+        User user = getUserById(id);
         repository.delete(user);
     }
 
     @Override
     public User changePassword(ChangePasswordForm form) throws Exception {
-        User storedUser = repository
-                .findById( form.getId() )
-                .orElseThrow(() -> new Exception("UsernotFound in ChangePassword."));
+        User user = getUserById(form.getId());
 
-        if( form.getCurrentPassword().equals(storedUser.getPassword())) {
+        if(!isLoggedUserADMIN() &&  !user.getPassword().equals(form.getCurrentPassword())) {
             throw new Exception("Current Password Incorrect.");
         }
 
@@ -83,8 +88,22 @@ public class UserServiceImpl implements UserService{
             throw new Exception("New Password and Confirm Password does not match!");
         }
 
-        storedUser.setPassword(form.getNewPassword());
-        return repository.save(storedUser);
+        String encodePassword = bCryptPasswordEncoder.encode(form.getNewPassword());
+        user.setPassword(encodePassword);
+        return repository.save(user);
+    }
+
+    private boolean isLoggedUserADMIN() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDetails loggedUser = null;
+        if (principal instanceof UserDetails) {
+            loggedUser = (UserDetails) principal;
+
+            loggedUser.getAuthorities().stream()
+                    .filter(x -> "ADMIN".equals(x.getAuthority() ))
+                    .findFirst().orElse(null); //loggedUser = null;
+        }
+        return loggedUser != null ?true :false;
     }
 
 

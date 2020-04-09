@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Controller
 public class UserController {
 
-    @GetMapping("/")
+    @GetMapping({"/","/login"})
     public String index()
     {
         return "index";
